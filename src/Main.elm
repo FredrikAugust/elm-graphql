@@ -1,6 +1,6 @@
 module Main exposing (main)
 
-import Browser
+import Browser exposing (UrlRequest(..))
 import Browser.Navigation as Nav
 import Html exposing (text)
 import Url
@@ -27,12 +27,16 @@ main =
 
 
 type alias Model =
-    String
+    { key : Nav.Key
+    , url : Url.Url
+    }
 
 
 init : () -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
-init _ _ _ =
-    ( "ok", Cmd.none )
+init _ url key =
+    ( { url = url, key = key }
+    , Cmd.none
+    )
 
 
 
@@ -45,8 +49,20 @@ type Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
-update _ _ =
-    ( "ok", Cmd.none )
+update msg model =
+    case msg of
+        UrlChanged url ->
+            ( { model | url = url }
+            , Cmd.none
+            )
+
+        LinkClicked urlRequest ->
+            case urlRequest of
+                Internal url ->
+                    ( model, Nav.pushUrl model.key (Url.toString url) )
+
+                External href ->
+                    ( model, Nav.load href )
 
 
 
