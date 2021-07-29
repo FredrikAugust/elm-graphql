@@ -73,6 +73,9 @@ view model =
             Success response ->
                 text response
 
+            Loading ->
+                text "loading"
+
             _ ->
                 text "not success"
         ]

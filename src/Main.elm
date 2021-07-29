@@ -8,6 +8,8 @@ import Url
 
 
 
+-- TODO: Move navigation logic to its own file
+-- TODO: Move URL change/request to own functions
 -- MAIN
 
 
