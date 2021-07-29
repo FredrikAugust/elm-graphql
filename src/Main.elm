@@ -1,5 +1,6 @@
-module Main exposing (main)
+module Main exposing (..)
 
+import Api
 import Browser exposing (UrlRequest(..))
 import Browser.Navigation as Nav
 import Html exposing (text)
@@ -17,8 +18,8 @@ main =
         , subscriptions = subscriptions
         , update = update
         , view = view
-        , onUrlChange = UrlChanged
-        , onUrlRequest = LinkClicked
+        , onUrlChange = \url -> NavMsg (UrlChanged url)
+        , onUrlRequest = \urlRequest -> NavMsg (LinkClicked urlRequest)
         }
 
 
@@ -26,15 +27,21 @@ main =
 -- MODEL
 
 
-type alias Model =
+type alias NavModel =
     { key : Nav.Key
     , url : Url.Url
     }
 
 
+type alias Model =
+    { navModel : NavModel
+    , apiModel : Api.Model
+    }
+
+
 init : () -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
 init _ url key =
-    ( { url = url, key = key }
+    ( { navModel = { url = url, key = key }, apiModel = Api.initialModel }
     , Cmd.none
     )
 
@@ -43,13 +50,18 @@ init _ url key =
 -- UPDATE
 
 
-type Msg
+type NavMsg
     = LinkClicked Browser.UrlRequest
     | UrlChanged Url.Url
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
+type Msg
+    = NavMsg NavMsg
+    | ApiMsg Api.Msg
+
+
+navUpdate : NavMsg -> NavModel -> ( NavModel, Cmd NavMsg )
+navUpdate msg model =
     case msg of
         UrlChanged url ->
             ( { model | url = url }
@@ -63,6 +75,24 @@ update msg model =
 
                 External href ->
                     ( model, Nav.load href )
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    case msg of
+        NavMsg navMsg ->
+            let
+                ( navModel, navCmd ) =
+                    navUpdate navMsg model.navModel
+            in
+            ( { model | navModel = navModel }, Cmd.map NavMsg navCmd )
+
+        ApiMsg apiMsg ->
+            let
+                ( apiModel, apiCmd ) =
+                    Api.update apiMsg model.apiModel
+            in
+            ( { model | apiModel = apiModel }, Cmd.map ApiMsg apiCmd )
 
 
 
@@ -79,7 +109,10 @@ subscriptions _ =
 
 
 view : Model -> Browser.Document Msg
-view _ =
+view model =
     { title = "homepage"
-    , body = [ text "hello, world" ]
+    , body =
+        [ text "hello, world"
+        , Html.map ApiMsg (Api.view model.apiModel)
+        ]
     }

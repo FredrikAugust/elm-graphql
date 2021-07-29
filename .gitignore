@@ -4,6 +4,8 @@
 .idea/**/dictionaries
 .idea/**/shelf
 
+node_modules/
+
 .idea/**/contentModel.xml
 
 .idea/**/dataSources/
